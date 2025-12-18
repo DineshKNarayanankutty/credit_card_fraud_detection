@@ -1,5 +1,76 @@
+# -------------------------
+# Data (DVC-managed)
+# -------------------------
 data/raw/
 data/processed/
 data/reference/
-reports/
+data/incoming/
+
+# -------------------------
+# Models & artifacts
+# -------------------------
+models/
+artifacts/
+checkpoints/
+
+# -------------------------
+# Metrics & reports
+# -------------------------
 metrics/
+reports/
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# -------------------------
+# Virtual environments
+# -------------------------
+.venv/
+venv/
+env/
+
+# -------------------------
+# IDEs
+# -------------------------
+.vscode/
+.idea/
+*.swp
+
+# -------------------------
+# OS
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Secrets
+# -------------------------
+.env
+.env.*
+*.key
+*.pem
+*.crt
+secrets/
+
+# -------------------------
+# Docker & Kubernetes
+# -------------------------
+*.log
+docker-compose.override.yml
+kubeconfig
+*.kubeconfig
+
+# -------------------------
+# Build outputs
+# -------------------------
+build/
+dist/
+*.egg-info/
