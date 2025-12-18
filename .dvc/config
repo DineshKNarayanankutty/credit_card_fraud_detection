@@ -1,4 +1,5 @@
 [core]
     remote = azure-blob
 ['remote "azure-blob"']
-    url = azure://mlops-dvc-store
+    url = azure://dvc-data
+    account_name = mlopsdvcstore123
