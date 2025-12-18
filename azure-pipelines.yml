@@ -1,0 +1,150 @@
+# Azure Pipelines CI/CD Configuration
+# Build → Push → Deploy
+
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+  paths:
+    include:
+    - src/
+    - api/
+    - pipelines/
+    - Dockerfile
+    - azure-pipelines.yml
+
+pr:
+  branches:
+    include:
+    - main
+    - develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  dockerRegistryServiceConnection: 'your-acr-connection'
+  imageRepository: 'fraud-detection-api'
+  containerRegistry: 'your-registry.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: '$(Build.BuildId)'
+  pythonVersion: '3.11'
+
+stages:
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# TEST STAGE
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- stage: Test
+  displayName: 'Test Code Quality'
+  jobs:
+  - job: RunTests
+    displayName: 'Run Unit Tests'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+      displayName: 'Use Python $(pythonVersion)'
+    
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pylint
+      displayName: 'Install Dependencies'
+    
+    - script: |
+        pylint src/ api/ pipelines/ monitoring/ --exit-zero --disable=all --enable=E,F
+      displayName: 'Lint Code'
+    
+    - script: |
+        pytest tests/ -v --cov=src --cov=api --cov=pipelines --cov-report=xml --cov-report=html
+      displayName: 'Run Unit Tests'
+      continueOnError: true
+    
+    - task: PublishCodeCoverageResults@1
+      inputs:
+        codeCoverageTool: Cobertura
+        summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# BUILD STAGE
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- stage: Build
+  displayName: 'Build Docker Image'
+  dependsOn: Test
+  condition: succeeded()
+  jobs:
+  - job: BuildImage
+    displayName: 'Build Docker Image'
+    steps:
+    - task: Docker@2
+      displayName: 'Build Docker Image'
+      inputs:
+        command: 'build'
+        Dockerfile: $(dockerfilePath)
+        tags: |
+          $(containerRegistry)/$(imageRepository):$(tag)
+          $(containerRegistry)/$(imageRepository):latest
+        arguments: |
+          --build-arg BUILDKIT_INLINE_CACHE=1
+          --label build.date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          --label vcs.ref=$(Build.SourceVersion)
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PUSH STAGE
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- stage: Push
+  displayName: 'Push to Azure Container Registry'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: PushImage
+    displayName: 'Push Docker Image to ACR'
+    steps:
+    - task: Docker@2
+      displayName: 'Push Image to ACR'
+      inputs:
+        command: 'push'
+        repository: '$(containerRegistry)/$(imageRepository)'
+        dockerfile: $(dockerfilePath)
+        tags: |
+          $(tag)
+          latest
+        containerRegistry: $(dockerRegistryServiceConnection)
+    
+    - script: |
+        echo "Image pushed: $(containerRegistry)/$(imageRepository):$(tag)"
+      displayName: 'Log Image Details'
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DEPLOY STAGE (Optional)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- stage: Deploy
+  displayName: 'Deploy to AKS'
+  dependsOn: Push
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployToAKS
+    displayName: 'Deploy to Kubernetes'
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@0
+            displayName: 'Deploy Kubernetes Manifests'
+            inputs:
+              action: 'deploy'
+              kubernetesServiceConnection: 'your-aks-connection'
+              namespace: 'mlops'
+              manifests: |
+                $(Pipeline.Workspace)/drop/k8s/deployment.yml
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(tag)
+              imagePullSecrets: |
+                acr-secret

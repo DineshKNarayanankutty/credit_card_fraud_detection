@@ -1,0 +1,179 @@
+# Kubernetes Deployment for Fraud Detection API
+# Production-grade with resource limits, health checks, env vars
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fraud-api-config
+  namespace: mlops
+data:
+  FRAUD_THRESHOLD: "0.5"
+  LOG_LEVEL: "INFO"
+  MODEL_PATH: "/models/fraud_detector.pkl"
+  SCALER_PATH: "/models/scaler.pkl"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fraud-api-secrets
+  namespace: mlops
+type: Opaque
+data:
+  # base64 encoded secrets (use external secrets in production)
+  # Example: echo -n "value" | base64
+  AZURE_SUBSCRIPTION_ID: ""  # Add your value
+  AZURE_RESOURCE_GROUP: ""   # Add your value
+  AZURE_ML_WORKSPACE: ""     # Add your value
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-detection-api
+  namespace: mlops
+  labels:
+    app: fraud-detection
+    version: v1.0.0
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: fraud-detection
+  template:
+    metadata:
+      labels:
+        app: fraud-detection
+        version: v1.0.0
+    spec:
+      serviceAccountName: fraud-api
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      
+      containers:
+      - name: fraud-api
+        image: fraud-detection-api:latest
+        imagePullPolicy: Always
+        
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        
+        # Environment from ConfigMap and Secrets
+        envFrom:
+        - configMapRef:
+            name: fraud-api-config
+        - secretRef:
+            name: fraud-api-secrets
+        
+        # Environment variables
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        
+        # Resource requests and limits
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+        
+        # Readiness probe (app ready to receive traffic)
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        
+        # Liveness probe (app is running)
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        
+        # Volume mounts for model and scaler
+        volumeMounts:
+        - name: models
+          mountPath: /models
+          readOnly: true
+      
+      # Volumes
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: fraud-models-pvc
+      
+      # Pod disruption budget
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - fraud-detection
+              topologyKey: kubernetes.io/hostname
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraud-detection-api
+  namespace: mlops
+  labels:
+    app: fraud-detection
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: fraud-detection
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fraud-api
+  namespace: mlops
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fraud-models-pvc
+  namespace: mlops
+spec:
+  accessModes:
+    - ReadWriteOnce 
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 5Gi
