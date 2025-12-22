@@ -1,54 +1,60 @@
 """
-Model factory layer.
-Responsibility: Create model instances ONLY.
-NO training logic.
-NO file I/O.
+Model factory.
+
+Responsibility:
+- Instantiate ML models based on configuration
+- NO training logic
+- NO data handling
 """
 
-import logging
 from typing import Dict, Any
-from xgboost import XGBClassifier
+import logging
+
+from sklearn.ensemble import RandomForestClassifier
+
+try:
+    from xgboost import XGBClassifier
+except ImportError:
+    XGBClassifier = None
 
 logger = logging.getLogger(__name__)
 
 
-def get_model(model_type: str, params: Dict[str, Any] = None) -> XGBClassifier:
+def get_model(
+    model_type: str,
+    model_params: Dict[str, Any],
+):
     """
-    Create model instance.
-    
-    Choice: XGBoost (optimized for fraud detection)
-    Reason: Better recall performance, handles imbalanced data well.
-    
+    Create and return a model instance.
+
     Args:
-        model_type: "xgboost" (only option)
-        params: Model hyperparameters
-    
+        model_type: Type of model (e.g., 'xgboost', 'rf')
+        model_params: Dictionary of model hyperparameters
+
     Returns:
-        Untrained XGBClassifier instance
-    
+        Instantiated model object
+
     Raises:
-        ValueError: If model_type is not "xgboost"
+        ValueError: If model type is unsupported
     """
-    if model_type != "xgboost":
-        raise ValueError(f"Unsupported model type: {model_type}. Only 'xgboost' is supported.")
-    
-    # Default parameters (recall-focused)
-    default_params = {
-        "n_estimators": 100,
-        "max_depth": 7,
-        "learning_rate": 0.1,
-        "subsample": 0.8,
-        "colsample_bytree": 0.8,
-        "scale_pos_weight": 1,  # Handle imbalance (will be overridden by SMOTE)
-        "random_state": 42,
-        "n_jobs": -1,
-    }
-    
-    # Override with provided params
-    if params:
-        default_params.update(params)
-    
-    logger.info(f"Creating XGBoost model with parameters: {default_params}")
-    model = XGBClassifier(**default_params)
-    
-    return model
+
+    model_type = model_type.lower()
+
+    logger.info(f"Initializing model: {model_type}")
+
+    if model_type == "xgboost":
+        if XGBClassifier is None:
+            raise ImportError(
+                "xgboost is not installed. Install it with `pip install xgboost`."
+            )
+
+        return XGBClassifier(**model_params)
+
+    elif model_type == "rf":
+        return RandomForestClassifier(**model_params)
+
+    else:
+        raise ValueError(
+            f"Unsupported model type: {model_type}. "
+            "Supported types are: 'xgboost', 'rf'."
+        )
