@@ -40,7 +40,7 @@ def save_model(model: XGBClassifier, filepath: str, overwrite: bool = False) -> 
     # Save model
     save_pickle(model, filepath)
     
-    logger.info(f"✓ Model saved to {filepath}")
+    logger.info(f"Model saved to {filepath}")
     return filepath
 
 
@@ -64,7 +64,7 @@ def load_model(filepath: str) -> XGBClassifier:
     
     model = load_pickle(filepath)
     
-    logger.info(f"✓ Model loaded from {filepath}")
+    logger.info(f"Model loaded from {filepath}")
     return model
 
 
@@ -97,7 +97,7 @@ def delete_model(filepath: str) -> None:
         raise FileNotFoundError(f"Model not found at {filepath}")
     
     path.unlink()
-    logger.info(f"✓ Model deleted from {filepath}")
+    logger.info(f"Model deleted from {filepath}")
 
 
 def list_models(directory: str = "models") -> list:
