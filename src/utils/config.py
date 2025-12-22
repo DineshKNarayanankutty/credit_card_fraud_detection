@@ -18,6 +18,7 @@ class DataConfig:
     raw_path: str = "data/raw/creditcard.csv"
     processed_path: str = "data/processed"
     remove_outliers: bool = True
+    target_column: str = "Class"
     train_ratio: float = 0.7
     val_ratio: float = 0.15
     test_ratio: float = 0.15
