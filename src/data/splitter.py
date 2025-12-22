@@ -1,86 +1,118 @@
 """
 Data splitting layer.
-Responsibility: Split data with no leakage.
-Enforces stratification and correct proportions.
+
+Responsibility:
+- Split data into train / validation / test sets
+- Enforce stratification
+- Prevent data leakage
 """
+
+import logging
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
-import logging
-from typing import Tuple
 from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 
 
 def train_val_test_split(
-    X: np.ndarray,
-    y: np.ndarray,
+    df: pd.DataFrame,
+    target_column: str,
     train_ratio: float = 0.7,
     val_ratio: float = 0.15,
     test_ratio: float = 0.15,
-    random_state: int = 42
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    random_state: int = 42,
+) -> Tuple[
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+]:
     """
-    Split data into train, validation, and test sets.
-    Enforces stratification to preserve class distribution.
-    
+    Split dataframe into train, validation, and test sets with stratification.
+
     Args:
-        X: Features (n_samples, n_features)
-        y: Target (n_samples,)
-        train_ratio: Proportion for training (0-1)
-        val_ratio: Proportion for validation (0-1)
-        test_ratio: Proportion for testing (0-1)
+        df: Input dataframe (features + target)
+        target_column: Name of target column
+        train_ratio: Proportion for training
+        val_ratio: Proportion for validation
+        test_ratio: Proportion for testing
         random_state: Random seed
-    
+
     Returns:
-        Tuple of (X_train, X_val, X_test, y_train, y_val, y_test)
-    
-    Raises:
-        ValueError: If ratios don't sum to 1.0
+        X_train, X_val, X_test, y_train, y_val, y_test
     """
+
+    # -------------------------
     # Validate ratios
+    # -------------------------
     total = train_ratio + val_ratio + test_ratio
     if not np.isclose(total, 1.0):
-        raise ValueError(f"Ratios must sum to 1.0, got {total}")
-    
-    # Validate inputs
-    if len(X) != len(y):
-        raise ValueError("X and y must have same length")
-    
-    logger.info(f"Splitting {len(X):,} samples: train={train_ratio:.1%}, val={val_ratio:.1%}, test={test_ratio:.1%}")
-    
+        raise ValueError(
+            f"Split ratios must sum to 1.0, got {total}"
+        )
+
+    # -------------------------
+    # Validate target column
+    # -------------------------
+    if target_column not in df.columns:
+        raise ValueError(
+            f"Target column '{target_column}' not found in dataframe"
+        )
+
+    # -------------------------
+    # Separate features & target
+    # -------------------------
+    y = df[target_column].values
+    X = df.drop(columns=[target_column]).values
+
+    logger.info(
+        f"Splitting {len(df):,} samples "
+        f"(train={train_ratio:.0%}, val={val_ratio:.0%}, test={test_ratio:.0%})"
+    )
+
+    # -------------------------
     # First split: train+val vs test
-    test_size_ratio = test_ratio / (1 - test_ratio)
+    # -------------------------
+    test_size_ratio = test_ratio / (1.0 - test_ratio)
+
     X_temp, X_test, y_temp, y_test = train_test_split(
-        X, y,
+        X,
+        y,
         test_size=test_size_ratio,
         random_state=random_state,
-        stratify=y
+        stratify=y,
     )
-    
+
+    # -------------------------
     # Second split: train vs val
-    val_size_ratio = val_ratio / (val_ratio + train_ratio)
+    # -------------------------
+    val_size_ratio = val_ratio / (train_ratio + val_ratio)
+
     X_train, X_val, y_train, y_val = train_test_split(
-        X_temp, y_temp,
+        X_temp,
+        y_temp,
         test_size=val_size_ratio,
         random_state=random_state,
-        stratify=y_temp
+        stratify=y_temp,
     )
-    
-    # Log split results
-    logger.info(f"Train: {len(X_train):,} samples ({len(X_train)/len(X):.1%})")
-    logger.info(f"Val:   {len(X_val):,} samples ({len(X_val)/len(X):.1%})")
-    logger.info(f"Test:  {len(X_test):,} samples ({len(X_test)/len(X):.1%})")
-    
-    # Verify stratification
-    train_pos = (y_train == 1).sum()
-    val_pos = (y_val == 1).sum()
-    test_pos = (y_test == 1).sum()
-    
-    logger.info(f"Class distribution preserved:")
-    logger.info(f"  Train positive rate: {train_pos/len(y_train):.4%}")
-    logger.info(f"  Val positive rate:   {val_pos/len(y_val):.4%}")
-    logger.info(f"  Test positive rate:  {test_pos/len(y_test):.4%}")
-    
+
+    # -------------------------
+    # Logging
+    # -------------------------
+    logger.info(f"Train samples: {len(X_train):,}")
+    logger.info(f"Validation samples: {len(X_val):,}")
+    logger.info(f"Test samples: {len(X_test):,}")
+
+    logger.info(
+        f"Positive class rates - "
+        f"train={np.mean(y_train):.4%}, "
+        f"val={np.mean(y_val):.4%}, "
+        f"test={np.mean(y_test):.4%}"
+    )
+
     return X_train, X_val, X_test, y_train, y_val, y_test
