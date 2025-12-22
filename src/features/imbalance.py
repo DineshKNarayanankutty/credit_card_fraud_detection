@@ -48,11 +48,11 @@ def apply_smote(
     
     # Log results
     unique_balanced, counts_balanced = np.unique(y_balanced, return_counts=True)
-    logger.info(f"✓ After SMOTE:")
+    logger.info(f"After SMOTE:")
     for cls, count in zip(unique_balanced, counts_balanced):
         logger.info(f"  Class {cls}: {count:,} samples ({count/len(y_balanced):.2%})")
     
-    logger.info(f"✓ Total samples increased: {len(X):,} → {len(X_balanced):,}")
+    logger.info(f"Total samples increased: {len(X):,} → {len(X_balanced):,}")
     
     return X_balanced, y_balanced
 

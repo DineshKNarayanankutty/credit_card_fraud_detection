@@ -27,7 +27,7 @@ class InferencePipeline:
         """
         logger.info("Initializing inference pipeline...")
         self.predictor = get_predictor(model_path, scaler_path)
-        logger.info("✓ Inference pipeline ready")
+        logger.info("Inference pipeline ready")
     
     def predict_transaction(
         self,

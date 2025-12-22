@@ -64,7 +64,7 @@ def find_optimal_threshold(
             best_score = score
             best_threshold = threshold
     
-    logger.info(f"✓ Optimal threshold: {best_threshold:.4f} (score: {best_score:.4f})")
+    logger.info(f"Optimal threshold: {best_threshold:.4f} (score: {best_score:.4f})")
     return best_threshold, best_score
 
 

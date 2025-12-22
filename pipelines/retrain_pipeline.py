@@ -130,7 +130,7 @@ class RetrainDecisionMaker:
                 }
                 
                 logger.info("="*60)
-                logger.info("✓ RETRAIN PIPELINE COMPLETE (SKIPPED)")
+                logger.info("RETRAIN PIPELINE COMPLETE (SKIPPED)")
                 logger.info("="*60)
                 
                 return results
@@ -155,7 +155,7 @@ class RetrainDecisionMaker:
             }
             
             logger.info("="*60)
-            logger.info("✓ RETRAIN PIPELINE COMPLETE (RETRAINED)")
+            logger.info("RETRAIN PIPELINE COMPLETE (RETRAINED)")
             logger.info("="*60)
             
             return results

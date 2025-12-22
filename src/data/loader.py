@@ -37,7 +37,7 @@ def load_csv(filepath: str) -> pd.DataFrame:
     if df.empty:
         raise ValueError(f"Data file is empty: {filepath}")
     
-    logger.info(f"✓ Loaded {len(df):,} rows × {len(df.columns)} columns")
+    logger.info(f"Loaded {len(df):,} rows and {len(df.columns)} columns")
     return df
 
 

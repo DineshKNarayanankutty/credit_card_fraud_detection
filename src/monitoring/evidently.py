@@ -311,7 +311,7 @@ class DriftDetector:
             
             logger.info(f"Drift detection results: {results}")
             logger.info("="*60)
-            logger.info("✓ DRIFT DETECTION COMPLETE")
+            logger.info("DRIFT DETECTION COMPLETE")
             logger.info("="*60)
             
             return results

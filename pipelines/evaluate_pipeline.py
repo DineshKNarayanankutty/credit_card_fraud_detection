@@ -101,7 +101,7 @@ class EvaluationPipeline:
             }
             
             logger.info("\n" + "="*60)
-            logger.info("✓ EVALUATION PIPELINE COMPLETE")
+            logger.info("EVALUATION PIPELINE COMPLETE")
             logger.info("="*60)
             
             return results

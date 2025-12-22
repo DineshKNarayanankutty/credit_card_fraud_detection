@@ -34,12 +34,12 @@ class FraudPredictor:
         
         # Load model
         self.model = load_model(model_path)
-        logger.info(f"✓ Model loaded from {model_path}")
+        logger.info(f"Model loaded from {model_path}")
         
         # Load scaler
         try:
             self.scaler = load_pickle(scaler_path)
-            logger.info(f"✓ Scaler loaded from {scaler_path}")
+            logger.info(f"Scaler loaded from {scaler_path}")
         except FileNotFoundError:
             raise FileNotFoundError(f"Scaler not found at {scaler_path}")
         

@@ -69,16 +69,16 @@ def train_val_test_split(
     )
     
     # Log split results
-    logger.info(f"✓ Train: {len(X_train):,} samples ({len(X_train)/len(X):.1%})")
-    logger.info(f"✓ Val:   {len(X_val):,} samples ({len(X_val)/len(X):.1%})")
-    logger.info(f"✓ Test:  {len(X_test):,} samples ({len(X_test)/len(X):.1%})")
+    logger.info(f"Train: {len(X_train):,} samples ({len(X_train)/len(X):.1%})")
+    logger.info(f"Val:   {len(X_val):,} samples ({len(X_val)/len(X):.1%})")
+    logger.info(f"Test:  {len(X_test):,} samples ({len(X_test)/len(X):.1%})")
     
     # Verify stratification
     train_pos = (y_train == 1).sum()
     val_pos = (y_val == 1).sum()
     test_pos = (y_test == 1).sum()
     
-    logger.info(f"✓ Class distribution preserved:")
+    logger.info(f"Class distribution preserved:")
     logger.info(f"  Train positive rate: {train_pos/len(y_train):.4%}")
     logger.info(f"  Val positive rate:   {val_pos/len(y_val):.4%}")
     logger.info(f"  Test positive rate:  {test_pos/len(y_test):.4%}")

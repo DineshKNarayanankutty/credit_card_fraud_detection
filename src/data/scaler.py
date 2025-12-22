@@ -51,7 +51,7 @@ class FeatureScaler:
         """
         self.scaler.fit(X)
         self.fitted = True
-        logger.info(f"✓ Scaler fitted on {X.shape:,} samples")
+        logger.info(f"Scaler fitted on {X.shape:,} samples")
         return self
     
     def transform(self, X: np.ndarray) -> np.ndarray:

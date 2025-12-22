@@ -85,11 +85,11 @@ async def lifespan(app: FastAPI):
         if health['status'] != 'healthy':
             raise RuntimeError("Pipeline health check failed on startup")
         
-        logger.info("✓ Inference pipeline initialized")
-        logger.info("✓ Model loaded and healthy")
-        logger.info(f"✓ Default threshold: {DEFAULT_THRESHOLD:.4f}")
-        logger.info(f"✓ Model version: {model_version}")
-        logger.info("✓ API ready to serve predictions")
+        logger.info("Inference pipeline initialized")
+        logger.info("Model loaded and healthy")
+        logger.info(f"Default threshold: {DEFAULT_THRESHOLD:.4f}")
+        logger.info(f"Model version: {model_version}")
+        logger.info("API ready to serve predictions")
         
     except Exception as e:
         logger.error(f"Failed to initialize pipeline: {e}", exc_info=True)

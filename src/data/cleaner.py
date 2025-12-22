@@ -29,7 +29,7 @@ def drop_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     if removed_count > 0:
         logger.warning(f"Removed {removed_count} rows with missing values")
     else:
-        logger.info("✓ No missing values found")
+        logger.info("No missing values found")
     
     return df_clean
 
@@ -51,7 +51,7 @@ def drop_duplicates(df: pd.DataFrame) -> pd.DataFrame:
     if removed_count > 0:
         logger.warning(f"Removed {removed_count} duplicate rows")
     else:
-        logger.info("✓ No duplicates found")
+        logger.info("No duplicates found")
     
     return df_unique
 
@@ -76,7 +76,7 @@ def remove_outliers_zscore(df: pd.DataFrame, threshold: float = 3.0) -> pd.DataF
         numeric_cols.remove('Class')
     
     if not numeric_cols:
-        logger.info("✓ No numeric columns to check for outliers")
+        logger.info("No numeric columns to check for outliers")
         return df
     
     # Calculate z-scores
@@ -90,7 +90,7 @@ def remove_outliers_zscore(df: pd.DataFrame, threshold: float = 3.0) -> pd.DataF
     if removed_count > 0:
         logger.warning(f"Removed {removed_count} outliers (z-score > {threshold})")
     else:
-        logger.info("✓ No outliers detected")
+        logger.info("No outliers detected")
     
     return df_clean
 
@@ -113,7 +113,7 @@ def validate_target_column(df: pd.DataFrame, target_col: str = 'Class') -> Tuple
     if len(unique_values) != 2:
         raise ValueError(f"Target column must be binary, found {len(unique_values)} classes")
     
-    logger.info(f"✓ Target column '{target_col}' is valid (binary classification)")
+    logger.info(f"Target column '{target_col}' is valid (binary classification)")
     return df, True
 
 
@@ -137,5 +137,5 @@ def clean_pipeline(df: pd.DataFrame, remove_outliers: bool = True) -> pd.DataFra
     if remove_outliers:
         df = remove_outliers_zscore(df)
     
-    logger.info(f"✓ Cleaning complete: {len(df):,} rows remaining")
+    logger.info(f"Cleaning complete: {len(df):,} rows remaining")
     return df
