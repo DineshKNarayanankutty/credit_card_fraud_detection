@@ -1,33 +1,33 @@
 stages:
   preprocess:
-    cmd: python pipelines/train_pipeline.py --stage preprocess
+    cmd: python -m pipelines.train_pipeline.py --stage preprocess
     deps:
       - data/raw.dvc
       - src/data
       - src/features
       - src/utils
-      - pipelines/train_pipeline.py
+      - pipelines.train_pipeline.py
     outs:
       - data/processed
 
   train:
-    cmd: python pipelines/train_pipeline.py --stage train
+    cmd: python -m pipelines.train_pipeline.py --stage train
     deps:
       - data/processed
       - src/models
       - src/evaluation
       - src/utils
-      - pipelines/train_pipeline.py
+      - pipelines.train_pipeline.py
     metrics:
       - metrics/training_metrics.json
 
   evaluate:
-    cmd: python pipelines/evaluate_pipeline.py
+    cmd: python -m pipelines.evaluate_pipeline.py
     deps:
       - data/processed
       - src/evaluation
       - src/utils
-      - pipelines/evaluate_pipeline.py
+      - pipelines.evaluate_pipeline.py
     metrics:
       - metrics/evaluation_metrics.json
     plots:
@@ -36,11 +36,11 @@ stages:
           y: tpr
 
   drift_check:
-    cmd: python pipelines/drift_pipeline.py
+    cmd: python -m pipelines.drift_pipeline.py
     deps:
       - data/reference.dvc
       - data/incoming.dvc
       - src/monitoring
-      - pipelines/drift_pipeline.py
+      - pipelines.drift_pipeline.py
     metrics:
       - reports/drift/drift_metrics.json
