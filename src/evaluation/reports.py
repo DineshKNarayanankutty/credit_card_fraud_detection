@@ -20,15 +20,15 @@ def generate_classification_report(metrics: Dict[str, float]) -> str:
         Formatted string report
     """
     report = """
-═══════════════════════════════════════════════════════════
+====================================
 CLASSIFICATION METRICS
-═══════════════════════════════════════════════════════════
+====================================
 Accuracy:  {accuracy:.4f}
 Precision: {precision:.4f}
 Recall:    {recall:.4f}
 F1-Score:  {f1:.4f}
 MCC:       {mcc:.4f}
-═══════════════════════════════════════════════════════════
+====================================
 """.format(**metrics)
     
     return report
@@ -45,9 +45,9 @@ def generate_confusion_matrix_report(cm_metrics: Dict[str, Any]) -> str:
         Formatted string report
     """
     report = """
-═══════════════════════════════════════════════════════════
+====================================
 CONFUSION MATRIX & DERIVED METRICS
-═══════════════════════════════════════════════════════════
+====================================
 True Positives:   {tp:>6}
 True Negatives:   {tn:>6}
 False Positives:  {fp:>6}
@@ -57,7 +57,7 @@ Sensitivity (Recall): {sensitivity:.4f}
 Specificity:          {specificity:.4f}
 False Positive Rate:  {fpr:.4f}
 False Negative Rate:  {fnr:.4f}
-═══════════════════════════════════════════════════════════
+====================================
 """.format(**cm_metrics)
     
     return report
@@ -74,12 +74,12 @@ def generate_probabilistic_report(metrics: Dict[str, float]) -> str:
         Formatted string report
     """
     report = """
-═══════════════════════════════════════════════════════════
+====================================
 PROBABILISTIC METRICS
-═══════════════════════════════════════════════════════════
+====================================
 ROC-AUC:  {roc_auc:.4f}
 PR-AUC:   {pr_auc:.4f}
-═══════════════════════════════════════════════════════════
+====================================
 """.format(**metrics)
     
     return report
@@ -96,9 +96,9 @@ def generate_threshold_report(threshold_analysis: Dict) -> str:
         Formatted string report
     """
     report = """
-═══════════════════════════════════════════════════════════
+====================================
 THRESHOLD ANALYSIS
-═══════════════════════════════════════════════════════════
+====================================
 """
     
     report += f"{'Threshold':<12} {'Precision':<12} {'Recall':<12} {'F1':<12}\n"
@@ -107,7 +107,7 @@ THRESHOLD ANALYSIS
     for threshold, metrics in sorted(threshold_analysis.items()):
         report += f"{threshold:<12.2f} {metrics['precision']:<12.4f} {metrics['recall']:<12.4f} {metrics['f1']:<12.4f}\n"
     
-    report += "═══════════════════════════════════════════════════════════\n"
+    report += "====================================\n"
     
     return report
 
@@ -131,9 +131,9 @@ def generate_full_report(
         Formatted string report
     """
     report = """
-╔═══════════════════════════════════════════════════════════╗
-║      FRAUD DETECTION MODEL EVALUATION REPORT              ║
-╚═══════════════════════════════════════════════════════════╝
+====================================
+FRAUD DETECTION MODEL REPORT
+====================================
 """
     
     report += generate_classification_report(classification_metrics)
@@ -146,9 +146,9 @@ def generate_full_report(
         report += generate_threshold_report(threshold_analysis)
     
     report += """
-╔═══════════════════════════════════════════════════════════╗
-║                      END OF REPORT                        ║
-╚═══════════════════════════════════════════════════════════╝
+====================================
+END OF REPORT
+====================================
 """
     
     return report
