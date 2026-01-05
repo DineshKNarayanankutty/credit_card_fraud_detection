@@ -1,51 +1,47 @@
 stages:
   preprocess:
-    cmd: python -m pipelines.train_pipeline --stage preprocess
+    cmd: python -m pipelines.train_pipeline --stage preprocess --data-path 
+      data/raw/creditcard.csv
     deps:
-      - data/raw/creditcard.csv
-      - src/data/
-      - src/features/
-      - src/utils/
-      - pipelines/train_pipeline.py
+    - data/raw/creditcard.csv
+    - pipelines/train_pipeline.py
+    - src
     outs:
-      - data/processed/
-      - artifacts/scaler.pkl
-
+    - artifacts/scaler.pkl
+    - data/processed
   train:
     cmd: python -m pipelines.train_pipeline --stage train
     deps:
-      - data/processed/
-      - artifacts/scaler.pkl
-      - src/models/
-      - src/evaluation/
-      - src/utils/
-      - pipelines/train_pipeline.py
+    - artifacts/scaler.pkl
+    - data/processed
+    - pipelines/train_pipeline.py
+    - src
     outs:
-      - artifacts/model.pkl
-    # metrics:
-    #   - metrics/training_metrics.json
-
+    - artifacts/cv_scores.json
+    - artifacts/metrics.json
+    - artifacts/threshold.json
+    - models
   evaluate:
     cmd: python -m pipelines.evaluate_pipeline
     deps:
-      - artifacts/model.pkl
-      - data/processed/
-      - src/evaluation/
-      - src/utils/
-      - pipelines/evaluate_pipeline.py
+    - artifacts/model.pkl
+    - data/processed/
+    - src/evaluation/
+    - src/utils/
+    - pipelines/evaluate_pipeline.py
     metrics:
-      - metrics/evaluation_metrics.json
+    - metrics/evaluation_metrics.json
     plots:
-      - metrics/roc_curve.csv:
-          x: fpr
-          y: tpr
+    - metrics/roc_curve.csv:
+        x: fpr
+        y: tpr
 
   drift_check:
     cmd: python -m pipelines.drift_pipeline
     deps:
-      - data/reference/
-      - data/incoming/
-      - src/monitoring/
-      - pipelines/drift_pipeline.py
+    - data/reference/
+    - data/incoming/
+    - src/monitoring/
+    - pipelines/drift_pipeline.py
     metrics:
-      - reports/drift/drift_metrics.json
+    - reports/drift/drift_metrics.json
