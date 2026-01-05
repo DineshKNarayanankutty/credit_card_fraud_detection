@@ -6,6 +6,8 @@ stages:
     - data/raw/creditcard.csv
     - pipelines/train_pipeline.py
     - src
+    params:
+    - params.yaml
     outs:
     - artifacts/scaler.pkl
     - data/processed
@@ -21,6 +23,8 @@ stages:
     - artifacts/metrics.json
     - artifacts/threshold.json
     - models
+    params:
+    - params.yaml
   evaluate:
     cmd: python -m pipelines.evaluate_pipeline
     deps:
