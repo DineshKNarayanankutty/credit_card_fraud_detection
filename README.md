@@ -1,9 +1,3 @@
-Perfect. Below is a **clean, interview-ready, production-grade `README.md`** that exactly matches what you’ve built — **no hand-wavy claims, no fake steps**.
-
-You can copy-paste this as-is.
-
----
-
 # Credit Card Fraud Detection — Production-Grade MLOps Pipeline
 
 This repository demonstrates how a **machine learning model is built, versioned, evaluated, and monitored as a production system**, not just a notebook experiment.
@@ -233,3 +227,4 @@ This repository demonstrates:
 * Containerize inference service
 * Deploy to **AKS**
 * Add live monitoring dashboards
+
