@@ -14,9 +14,20 @@ stages:
       size: 6605
     - path: src
       hash: md5
-      md5: 602acfd135945ad261f731ec6a1fdae9.dir
+      md5: 86b1ac3280b46b760af28016a9e8cb8f.dir
       size: 101615
       nfiles: 31
+    params:
+      params.yaml:
+        data:
+          train_ratio: 0.7
+          val_ratio: 0.15
+          test_ratio: 0.15
+          random_state: 42
+        features:
+          scaling_method: standard
+          handle_imbalance: true
+          smote_k_neighbors: 5
     outs:
     - path: artifacts/scaler.pkl
       hash: md5

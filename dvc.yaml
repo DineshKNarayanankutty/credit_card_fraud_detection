@@ -7,7 +7,8 @@ stages:
     - pipelines/train_pipeline.py
     - src
     params:
-    - params.yaml
+    - data
+    - features
     outs:
     - artifacts/scaler.pkl
     - data/processed
@@ -24,7 +25,9 @@ stages:
     - artifacts/threshold.json
     - models
     params:
-    - params.yaml
+    - evaluation
+    - features
+    - model
   evaluate:
     cmd: python -m pipelines.evaluate_pipeline
     deps:
