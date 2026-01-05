@@ -1,38 +1,44 @@
-Credit Card Fraud Detection — Production-Grade MLOps Pipeline
+Perfect. Below is a **clean, interview-ready, production-grade `README.md`** that exactly matches what you’ve built — **no hand-wavy claims, no fake steps**.
 
-This repository demonstrates how a machine learning model is built, versioned, evaluated, and monitored as a production system, not just a notebook experiment.
+You can copy-paste this as-is.
 
-The project focuses on end-to-end MLOps practices using DVC, MLflow, modular pipelines, and drift-ready architecture, while keeping the ML model intentionally simple so the emphasis remains on system design and reliability.
+---
 
-🚀 Project Goals
+# Credit Card Fraud Detection — Production-Grade MLOps Pipeline
 
-Build a reproducible ML training pipeline
+This repository demonstrates how a **machine learning model is built, versioned, evaluated, and monitored as a production system**, not just a notebook experiment.
 
-Track data, parameters, and artifacts using DVC
+The project focuses on **end-to-end MLOps practices** using **DVC, MLflow, modular pipelines, and drift-ready architecture**, while keeping the ML model intentionally simple so the emphasis remains on **system design and reliability**.
 
-Log experiments and metrics with MLflow
+---
 
-Serve models via clean inference abstractions
+## 🚀 Project Goals
 
-Prepare the system for production monitoring and drift detection
+* Build a **reproducible ML training pipeline**
+* Track **data, parameters, and artifacts** using DVC
+* Log experiments and metrics with **MLflow**
+* Serve models via **clean inference abstractions**
+* Prepare the system for **production monitoring and drift detection**
+* Keep the architecture **cloud-ready (Azure ML compatible)**
 
-Keep the architecture cloud-ready (Azure ML compatible)
+---
 
-🧠 Problem Statement
+## 🧠 Problem Statement
 
-Credit card fraud detection is a highly imbalanced classification problem where:
+Credit card fraud detection is a **highly imbalanced classification problem** where:
 
-Accuracy alone is misleading
+* Accuracy alone is misleading
+* Recall and precision trade-offs matter
+* Threshold tuning is critical
+* Data drift is common in production
 
-Recall and precision trade-offs matter
+This project treats fraud detection as a **system problem**, not just a modeling task.
 
-Threshold tuning is critical
+---
 
-Data drift is common in production
+## 🏗️ High-Level Architecture
 
-This project treats fraud detection as a system problem, not just a modeling task.
-
-🏗️ High-Level Architecture
+```
 Raw Data (DVC)
    ↓
 Preprocessing Pipeline
@@ -48,8 +54,13 @@ Evaluation & Reporting
 Model + Artifacts (DVC + MLflow)
    ↓
 Inference / Monitoring (Drift-Ready)
+```
 
-📂 Repository Structure
+---
+
+## 📂 Repository Structure
+
+```
 credit_card_fraud_detection/
 │
 ├── api/                     # FastAPI inference service
@@ -82,153 +93,143 @@ credit_card_fraud_detection/
 ├── params.yaml              # Tunable ML parameters
 ├── requirements.txt
 └── README.md
+```
 
-🔁 Pipeline Stages (DVC)
-1️⃣ Preprocessing
+---
 
-Load raw CSV
+## 🔁 Pipeline Stages (DVC)
 
-Clean data (missing values, duplicates, outliers)
+### 1️⃣ Preprocessing
 
-Train / validation / test split
+* Load raw CSV
+* Clean data (missing values, duplicates, outliers)
+* Train / validation / test split
+* Fit scaler **on train only**
+* Persist splits and scaler
 
-Fit scaler on train only
-
-Persist splits and scaler
-
+```bash
 dvc repro preprocess
+```
 
-2️⃣ Training
+---
 
-Load processed data
+### 2️⃣ Training
 
-Handle class imbalance (SMOTE on train only)
+* Load processed data
+* Handle class imbalance (SMOTE on train only)
+* Train model
+* Cross-validate
+* Optimize decision threshold
+* Evaluate on test set
+* Save model and metrics
 
-Train model
-
-Cross-validate
-
-Optimize decision threshold
-
-Evaluate on test set
-
-Save model and metrics
-
+```bash
 dvc repro train
+```
 
-3️⃣ Evaluation
+---
 
-Load trained model and scaler
+### 3️⃣ Evaluation
 
-Run threshold analysis
+* Load trained model and scaler
+* Run threshold analysis
+* Generate evaluation reports
+* Persist metrics for tracking
 
-Generate evaluation reports
-
-Persist metrics for tracking
-
+```bash
 dvc repro evaluate
+```
 
-4️⃣ Drift Detection (Contract-Based)
+---
 
-Checks for presence of reference & incoming data
+### 4️⃣ Drift Detection (Contract-Based)
 
-Emits drift signals without breaking pipelines
+* Checks for presence of reference & incoming data
+* Emits drift signals **without breaking pipelines**
+* Designed for **post-deployment monitoring tools**
+* Compatible with Evidently / Azure ML Monitoring
 
-Designed for post-deployment monitoring tools
-
-Compatible with Evidently / Azure ML Monitoring
-
+```bash
 dvc repro drift_check
+```
 
+> Drift detection is intentionally decoupled from training to keep pipelines deterministic and production-safe.
 
-Drift detection is intentionally decoupled from training to keep pipelines deterministic and production-safe.
+---
 
-📊 Experiment Tracking (MLflow)
+## 📊 Experiment Tracking (MLflow)
 
 MLflow is used to:
 
-Track metrics and parameters
-
-Compare experiment runs
-
-Prepare for remote tracking backends (Azure ML)
+* Track metrics and parameters
+* Compare experiment runs
+* Prepare for remote tracking backends (Azure ML)
 
 Start UI locally:
 
+```bash
 mlflow ui
+```
 
-🧪 Model Performance (Example)
+---
 
-Imbalanced dataset (~0.2% fraud)
+## 🧪 Model Performance (Example)
 
-Accuracy alone is misleading
+* **Imbalanced dataset (~0.2% fraud)**
+* Accuracy alone is misleading
+* Threshold tuning improves recall
+* Evaluation focuses on:
 
-Threshold tuning improves recall
+  * Precision
+  * Recall
+  * F1-score
+  * ROC-AUC
+  * PR-AUC
 
-Evaluation focuses on:
+---
 
-Precision
+## 🔐 Design Principles
 
-Recall
+* **Separation of concerns**
 
-F1-score
+  * Pipelines orchestrate
+  * Modules implement logic
+* **No data leakage**
+* **Reproducibility first**
+* **Monitoring ≠ Training**
+* **Cloud-agnostic by default**
 
-ROC-AUC
+---
 
-PR-AUC
-
-🔐 Design Principles
-
-Separation of concerns
-
-Pipelines orchestrate
-
-Modules implement logic
-
-No data leakage
-
-Reproducibility first
-
-Monitoring ≠ Training
-
-Cloud-agnostic by default
-
-☁️ Cloud & Deployment Readiness
+## ☁️ Cloud & Deployment Readiness
 
 This project is intentionally structured to support:
 
-Azure ML Jobs
+* **Azure ML Jobs**
+* **Azure Blob Storage (DVC remote)**
+* **AKS / Container deployment**
+* **Production monitoring tools**
 
-Azure Blob Storage (DVC remote)
+> Next phase: Azure ML integration for training orchestration and registry.
 
-AKS / Container deployment
+---
 
-Production monitoring tools
-
-Next phase: Azure ML integration for training orchestration and registry.
-
-🧩 Why This Project Matters
+## 🧩 Why This Project Matters
 
 This repository demonstrates:
 
-Real MLOps engineering (not tutorials)
+* Real MLOps engineering (not tutorials)
+* Correct handling of imbalanced data
+* Clean pipeline orchestration
+* Drift-ready system design
+* Interview-grade architecture decisions
 
-Correct handling of imbalanced data
+---
 
-Clean pipeline orchestration
+## 🔜 Next Steps
 
-Drift-ready system design
-
-Interview-grade architecture decisions
-
-🔜 Next Steps
-
-Integrate Azure ML training jobs
-
-Configure MLflow remote backend
-
-Containerize inference service
-
-Deploy to AKS
-
-Add live monitoring dashboards
+* Integrate **Azure ML training jobs**
+* Configure **MLflow remote backend**
+* Containerize inference service
+* Deploy to **AKS**
+* Add live monitoring dashboards
