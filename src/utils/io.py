@@ -9,8 +9,9 @@ Responsibility:
 """
 
 import os
+import json
 import pickle
-from typing import Tuple, Any
+from typing import Tuple, Any, Dict
 
 import numpy as np
 
@@ -19,14 +20,17 @@ import numpy as np
 # ------------------------------------------------------------------
 PROCESSED_DATA_DIR = "data/processed"
 ARTIFACTS_DIR = "artifacts"
+
 SCALER_PATH = os.path.join(ARTIFACTS_DIR, "scaler.pkl")
+METRICS_PATH = os.path.join(ARTIFACTS_DIR, "metrics.json")
+CV_SCORES_PATH = os.path.join(ARTIFACTS_DIR, "cv_scores.json")
+THRESHOLD_PATH = os.path.join(ARTIFACTS_DIR, "threshold.json")
 
 
 # ------------------------------------------------------------------
 # INTERNAL UTILS
 # ------------------------------------------------------------------
 def _ensure_dir(path: str) -> None:
-    """Create directory if it does not exist."""
     if path:
         os.makedirs(path, exist_ok=True)
 
@@ -35,18 +39,12 @@ def _ensure_dir(path: str) -> None:
 # GENERIC PICKLE HELPERS
 # ------------------------------------------------------------------
 def save_pickle(obj: Any, path: str) -> None:
-    """
-    Save any Python object using pickle.
-    """
     _ensure_dir(os.path.dirname(path))
     with open(path, "wb") as f:
         pickle.dump(obj, f)
 
 
 def load_pickle(path: str) -> Any:
-    """
-    Load any pickled Python object.
-    """
     with open(path, "rb") as f:
         return pickle.load(f)
 
@@ -62,9 +60,6 @@ def save_processed_data(
     y_val: np.ndarray,
     y_test: np.ndarray,
 ) -> None:
-    """
-    Persist processed train/val/test splits.
-    """
     _ensure_dir(PROCESSED_DATA_DIR)
 
     np.save(os.path.join(PROCESSED_DATA_DIR, "X_train.npy"), X_train)
@@ -77,12 +72,6 @@ def save_processed_data(
 
 
 def load_processed_data() -> Tuple[np.ndarray, ...]:
-    """
-    Load processed train/val/test splits.
-
-    Returns:
-        X_train, X_val, X_test, y_train, y_val, y_test
-    """
     return (
         np.load(os.path.join(PROCESSED_DATA_DIR, "X_train.npy")),
         np.load(os.path.join(PROCESSED_DATA_DIR, "X_val.npy")),
@@ -97,7 +86,24 @@ def load_processed_data() -> Tuple[np.ndarray, ...]:
 # SCALER
 # ------------------------------------------------------------------
 def save_scaler(scaler) -> None:
-    """
-    Persist fitted scaler for inference reuse.
-    """
     save_pickle(scaler, SCALER_PATH)
+
+
+# ------------------------------------------------------------------
+# METRICS (DVC OUTPUTS)
+# ------------------------------------------------------------------
+def save_metrics(
+    metrics: Dict[str, Any],
+    cv_scores: Dict[str, Any],
+    threshold: float,
+) -> None:
+    _ensure_dir(ARTIFACTS_DIR)
+
+    with open(METRICS_PATH, "w") as f:
+        json.dump(metrics, f, indent=2)
+
+    with open(CV_SCORES_PATH, "w") as f:
+        json.dump(cv_scores, f, indent=2)
+
+    with open(THRESHOLD_PATH, "w") as f:
+        json.dump({"threshold": threshold}, f, indent=2)
