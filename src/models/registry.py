@@ -13,7 +13,7 @@ from src.utils.io import save_pickle, load_pickle
 logger = logging.getLogger(__name__)
 
 
-def save_model(model: XGBClassifier, filepath: str, overwrite: bool = False) -> str:
+def save_model(model: XGBClassifier, filepath: str, overwrite: bool = True) -> None:
     """
     Save model to disk.
     
