@@ -1,0 +1,17 @@
+data:
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+  random_state: 42
+
+features:
+  scaling_method: standard
+  handle_imbalance: true
+  smote_k_neighbors: 5
+
+model:
+  model_type: xgboost
+  cv_folds: 5
+
+evaluation:
+  threshold_method: f1
