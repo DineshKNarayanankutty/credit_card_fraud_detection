@@ -122,14 +122,14 @@ stages:
     deps:
     - path: data/incoming
       hash: md5
-      md5: d751713988987e9331980363e24189ce.dir
+      md5: 234fe32b47806dbf008fc0e7081be731.dir
       size: 0
-      nfiles: 0
+      nfiles: 1
     - path: data/reference
       hash: md5
-      md5: d751713988987e9331980363e24189ce.dir
+      md5: 234fe32b47806dbf008fc0e7081be731.dir
       size: 0
-      nfiles: 0
+      nfiles: 1
     - path: pipelines/drift_pipeline.py
       hash: md5
       md5: eaf11afdeadfe12de57e052407137d28
@@ -142,5 +142,5 @@ stages:
     outs:
     - path: artifacts/drift_report.json
       hash: md5
-      md5: 67adeed783aba91e35934d6171bcc1cd
-      size: 122
+      md5: adf00d9552da0c0df79b7a14ce277a44
+      size: 78
