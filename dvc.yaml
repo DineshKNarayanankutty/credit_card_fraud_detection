@@ -22,8 +22,8 @@ stages:
     outs:
     - artifacts/cv_scores.json
     - artifacts/metrics.json
+    - artifacts/model.pkl
     - artifacts/threshold.json
-    - models
     params:
     - evaluation
     - features
@@ -32,23 +32,18 @@ stages:
     cmd: python -m pipelines.evaluate_pipeline
     deps:
     - artifacts/model.pkl
-    - data/processed/
-    - src/evaluation/
-    - src/utils/
+    - artifacts/scaler.pkl
+    - data/processed
     - pipelines/evaluate_pipeline.py
-    metrics:
-    - metrics/evaluation_metrics.json
-    plots:
-    - metrics/roc_curve.csv:
-        x: fpr
-        y: tpr
-
+    - src
+    outs:
+    - artifacts/evaluation_metrics.json
   drift_check:
     cmd: python -m pipelines.drift_pipeline
     deps:
-    - data/reference/
-    - data/incoming/
-    - src/monitoring/
+    - data/incoming
+    - data/reference
     - pipelines/drift_pipeline.py
-    metrics:
-    - reports/drift/drift_metrics.json
+    - src
+    outs:
+    - artifacts/drift_report.json

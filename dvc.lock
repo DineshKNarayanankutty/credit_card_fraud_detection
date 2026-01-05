@@ -14,9 +14,9 @@ stages:
       size: 6605
     - path: src
       hash: md5
-      md5: 86b1ac3280b46b760af28016a9e8cb8f.dir
-      size: 101615
-      nfiles: 31
+      md5: a89d35e9ecd318b252274d65b3698644.dir
+      size: 107199
+      nfiles: 32
     params:
       params.yaml:
         data:
@@ -38,3 +38,109 @@ stages:
       md5: 272c251299054bf96ac7de04fab002b0.dir
       size: 60970328
       nfiles: 6
+  train:
+    cmd: python -m pipelines.train_pipeline --stage train
+    deps:
+    - path: artifacts/scaler.pkl
+      hash: md5
+      md5: 527939f31df9ff58b28531fba3b6ca69
+      size: 954
+    - path: data/processed
+      hash: md5
+      md5: 272c251299054bf96ac7de04fab002b0.dir
+      size: 60970328
+      nfiles: 6
+    - path: pipelines/train_pipeline.py
+      hash: md5
+      md5: 21d1164c2dd5c6ed2f8b4e2fb0fe1070
+      size: 6605
+    - path: src
+      hash: md5
+      md5: a89d35e9ecd318b252274d65b3698644.dir
+      size: 107199
+      nfiles: 32
+    params:
+      params.yaml:
+        evaluation:
+          threshold_method: f1
+        features:
+          scaling_method: standard
+          handle_imbalance: true
+          smote_k_neighbors: 5
+        model:
+          model_type: xgboost
+          cv_folds: 5
+    outs:
+    - path: artifacts/cv_scores.json
+      hash: md5
+      md5: 991e6c584072d29abd0ded4a78cd4dbb
+      size: 415
+    - path: artifacts/metrics.json
+      hash: md5
+      md5: 510eb28e5f46d396602ca079f1f1bfc9
+      size: 394
+    - path: artifacts/model.pkl
+      hash: md5
+      md5: 6c863b50fc44941154521ba33feabc90
+      size: 434720
+    - path: artifacts/threshold.json
+      hash: md5
+      md5: df71fedc41e1df9fa60ea6771852b5b0
+      size: 25
+  evaluate:
+    cmd: python -m pipelines.evaluate_pipeline
+    deps:
+    - path: artifacts/model.pkl
+      hash: md5
+      md5: 6c863b50fc44941154521ba33feabc90
+      size: 434720
+    - path: artifacts/scaler.pkl
+      hash: md5
+      md5: 527939f31df9ff58b28531fba3b6ca69
+      size: 954
+    - path: data/processed
+      hash: md5
+      md5: 272c251299054bf96ac7de04fab002b0.dir
+      size: 60970328
+      nfiles: 6
+    - path: pipelines/evaluate_pipeline.py
+      hash: md5
+      md5: 39ea2a283f3164c4c5316a528ee03c92
+      size: 3548
+    - path: src
+      hash: md5
+      md5: a89d35e9ecd318b252274d65b3698644.dir
+      size: 107199
+      nfiles: 32
+    outs:
+    - path: artifacts/evaluation_metrics.json
+      hash: md5
+      md5: a96f7781087cf8428268ef193fde73dc
+      size: 855
+  drift_check:
+    cmd: python -m pipelines.drift_pipeline
+    deps:
+    - path: data/incoming
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+    - path: data/reference
+      hash: md5
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
+    - path: pipelines/drift_pipeline.py
+      hash: md5
+      md5: eaf11afdeadfe12de57e052407137d28
+      size: 988
+    - path: src
+      hash: md5
+      md5: 449a671a64d72020c32afaa2ac935872.dir
+      size: 98906
+      nfiles: 33
+    outs:
+    - path: artifacts/drift_report.json
+      hash: md5
+      md5: 67adeed783aba91e35934d6171bcc1cd
+      size: 122
