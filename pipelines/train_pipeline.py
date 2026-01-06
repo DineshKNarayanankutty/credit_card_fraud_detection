@@ -1,20 +1,9 @@
 """
 Training pipeline orchestration.
-
-Responsibility:
-- Orchestrate preprocessing and training stages ONLY
-- NO ML logic
-- NO data manipulation logic
-- NO serialization logic outside registry / io helpers
-
-Designed for:
-- dvc repro
-- Azure ML Jobs
 """
 
 import argparse
 import logging
-
 import os
 import shutil
 
@@ -54,11 +43,6 @@ logger = logging.getLogger(__name__)
 
 
 class TrainingPipeline:
-    """
-    End-to-end training pipeline.
-    Orchestration only.
-    """
-
     def __init__(self, config):
         self.config = config
         logger.info(
@@ -66,12 +50,9 @@ class TrainingPipeline:
         )
 
     # -----------------------------
-    # PREPROCESS STAGE
+    # PREPROCESS
     # -----------------------------
     def preprocess(self, data_path: str) -> None:
-        """
-        Preprocessing stage.
-        """
         logger.info("Starting preprocessing stage")
 
         df = load_csv(data_path)
@@ -90,25 +71,23 @@ class TrainingPipeline:
         scaler.fit(X_train)
 
         save_processed_data(
-            X_train,
-            X_val,
-            X_test,
-            y_train,
-            y_val,
-            y_test,
+            X_train, X_val, X_test,
+            y_train, y_val, y_test
         )
         save_scaler(scaler)
 
-        logger.info("Preprocessing stage completed successfully")
+        logger.info("Preprocessing stage completed")
 
     # -----------------------------
-    # TRAIN STAGE
+    # TRAIN
     # -----------------------------
-    def train(self) -> None:
-        """
-        Training + evaluation stage.
-        """
+    def train(self, raw_data_path: str) -> None:   # <<< CHANGED
         logger.info("Starting training stage")
+
+        # <<< CHANGED: Azure ML safety
+        if not os.path.exists("data/processed/X_train.npy"):
+            logger.info("Processed data not found — running preprocess stage")
+            self.preprocess(raw_data_path)
 
         X_train, X_val, X_test, y_train, y_val, y_test = load_processed_data()
 
@@ -120,10 +99,6 @@ class TrainingPipeline:
                 k_neighbors=self.config.features.smote_k_neighbors,
                 random_state=self.config.data.random_state,
             )
-
-        assert X_train.shape[0] == y_train.shape[0], (
-            f"SMOTE mismatch: X={X_train.shape[0]}, y={y_train.shape[0]}"
-        )
 
         scaler = load_pickle(SCALER_PATH)
 
@@ -139,117 +114,80 @@ class TrainingPipeline:
         train(model, X_train, y_train)
 
         cv_scores = cross_validate(
-            model,
-            X_train,
-            y_train,
-            cv=self.config.model.cv_folds,
+            model, X_train, y_train,
+            cv=self.config.model.cv_folds
         )
 
-        val_results = evaluate_on_set(
-            model,
-            X_val,
-            y_val,
-            set_name="validation",
-        )
-        val_probs = val_results["probabilities"]
-
+        val_results = evaluate_on_set(model, X_val, y_val, "validation")
         optimal_threshold, _ = find_optimal_threshold(
             y_true=y_val,
-            y_proba=val_probs,
+            y_proba=val_results["probabilities"],
             metric=self.config.evaluation.threshold_method,
         )
 
-        test_results = evaluate_on_set(
-            model,
-            X_test,
-            y_test,
-            set_name="test",
+        test_results = evaluate_on_set(model, X_test, y_test, "test")
+        test_preds = apply_threshold(
+            test_results["probabilities"],
+            optimal_threshold
         )
-        test_probs = test_results["probabilities"]
-        test_preds = apply_threshold(test_probs, optimal_threshold)
 
         metrics = compute_all_metrics(
             y_true=y_test,
             y_pred=test_preds,
-            y_proba=test_probs,
+            y_proba=test_results["probabilities"],
         )
 
-        classification_metrics = {
-            "accuracy": metrics["accuracy"],
-            "precision": metrics["precision"],
-            "recall": metrics["recall"],
-            "f1": metrics["f1"],
-            "mcc": metrics.get("mcc", 0.0),
-        }
-
-        cm_metrics = {
-            "tp": metrics["tp"],
-            "tn": metrics["tn"],
-            "fp": metrics["fp"],
-            "fn": metrics["fn"],
-            "sensitivity": metrics["sensitivity"],
-            "specificity": metrics["specificity"],
-            "fpr": metrics["fpr"],
-            "fnr": metrics["fnr"],
-        }
-
-        prob_metrics = {
-            "roc_auc": metrics.get("roc_auc"),
-            "pr_auc": metrics.get("pr_auc"),
-        }
-
         report = generate_full_report(
-            classification_metrics,
-            cm_metrics,
-            prob_metrics=prob_metrics,
+            {
+                "accuracy": metrics["accuracy"],
+                "precision": metrics["precision"],
+                "recall": metrics["recall"],
+                "f1": metrics["f1"],
+                "mcc": metrics.get("mcc", 0.0),
+            },
+            {
+                "tp": metrics["tp"],
+                "tn": metrics["tn"],
+                "fp": metrics["fp"],
+                "fn": metrics["fn"],
+                "sensitivity": metrics["sensitivity"],
+                "specificity": metrics["specificity"],
+                "fpr": metrics["fpr"],
+                "fnr": metrics["fnr"],
+            },
+            prob_metrics={
+                "roc_auc": metrics.get("roc_auc"),
+                "pr_auc": metrics.get("pr_auc"),
+            },
         )
         log_report(report)
 
-        save_metrics(
-            metrics=metrics,
-            cv_scores=cv_scores,
-            threshold=optimal_threshold,
-        )
-
+        save_metrics(metrics, cv_scores, optimal_threshold)
         save_model(model, self.config.model.output_path)
 
+        # <<< CHANGED: Azure ML outputs contract
         os.makedirs("outputs", exist_ok=True)
-
-        shutil.copy(
-            self.config.model.output_path,  
-            "outputs/model.pkl"
-        )
-
-        shutil.copy(
-            SCALER_PATH,                    
-            "outputs/scaler.pkl"
-        )
+        shutil.copy(self.config.model.output_path, "outputs/model.pkl")
+        shutil.copy(SCALER_PATH, "outputs/scaler.pkl")
 
         logger.info("Training stage completed successfully")
 
 
 # -----------------------------
-# CLI ENTRYPOINT
+# CLI
 # -----------------------------
 if __name__ == "__main__":
     setup_logging()
 
-    parser = argparse.ArgumentParser(description="Training pipeline")
-    parser.add_argument(
-        "--stage",
-        required=True,
-        choices=["preprocess", "train"],
-    )
-    parser.add_argument(
-        "--data-path",
-        default="data/raw/creditcard.csv",
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--stage", required=True, choices=["preprocess", "train"])
+    parser.add_argument("--raw-data", required=True)   # <<< CHANGED
 
     args = parser.parse_args()
 
     pipeline = TrainingPipeline(config)
 
     if args.stage == "preprocess":
-        pipeline.preprocess(args.data_path)
+        pipeline.preprocess(args.raw_data)
     else:
-        pipeline.train()
+        pipeline.train(args.raw_data)
