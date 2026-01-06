@@ -1,41 +1,41 @@
-# Production-grade Dockerfile for Fraud Detection API
-# Base: Python 3.11 slim (minimal + secure)
-# Layers: dependencies → code → runtime
+# ===============================
+# Fraud Detection Inference API
+# ===============================
 
-FROM python:3.11-slim
+FROM python:3.9-slim
 
-# Set working directory
+# Prevent Python from writing pyc files
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Install system dependencies (minimal)
+# System deps (minimal)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (layer caching)
+# Copy requirements first (cache-friendly)
 COPY requirements.txt .
 
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy source code
 COPY api/ ./api/
 COPY src/ ./src/
-COPY pipelines/ ./pipelines/
-COPY monitoring/ ./monitoring/
-COPY config/ ./config/
+COPY artifacts/ ./artifacts/
+COPY params.yaml .
 
-# Create non-root user for security
-RUN useradd -m -u 1000 mlops && \
-    chown -R mlops:mlops /app
+# Non-root user
+RUN useradd -m -u 1000 mlops && chown -R mlops:mlops /app
 USER mlops
 
-# Expose port
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')"
+# Health check (FastAPI)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Run API
-CMD ["python", "api/main.py"]
+# Run API properly
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
