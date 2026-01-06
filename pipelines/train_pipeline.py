@@ -15,6 +15,9 @@ Designed for:
 import argparse
 import logging
 
+import os
+import shutil
+
 from src.utils.logger import setup_logging
 from src.utils.config import config
 
@@ -209,6 +212,18 @@ class TrainingPipeline:
         )
 
         save_model(model, self.config.model.output_path)
+
+        os.makedirs("outputs", exist_ok=True)
+
+        shutil.copy(
+            self.config.model.output_path,  
+            "outputs/model.pkl"
+        )
+
+        shutil.copy(
+            SCALER_PATH,                    
+            "outputs/scaler.pkl"
+        )
 
         logger.info("Training stage completed successfully")
 
