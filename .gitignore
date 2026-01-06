@@ -97,3 +97,7 @@ mlruns/
 # Jupyter
 # -------------------------
 .ipynb_checkpoints/
+
+
+# Azure ML job outputs
+outputs/
