@@ -77,10 +77,19 @@ async def lifespan(app: FastAPI):
     logger.info("API STARTUP")
     logger.info("=" * 60)
 
+    MODEL_PATH = os.getenv(
+        "MODEL_PATH",
+        config.model.output_path
+    )
+
+    SCALER_PATH = os.getenv(
+        "SCALER_PATH",
+        "artifacts/scaler.pkl"
+    )
     try:
         inference_pipeline = InferencePipeline(
-            model_path=config.model.model_path,
-            scaler_path=config.model.preprocessor_path
+            model_path=MODEL_PATH,
+            scaler_path=SCALER_PATH
         )
 
         health = inference_pipeline.health_check()
