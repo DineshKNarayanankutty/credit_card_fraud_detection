@@ -13,6 +13,8 @@ ENV SCALER_PATH=/app/artifacts/scaler.pkl
 
 WORKDIR /app
 
+ENV PYTHONPATH=/app
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     curl \
