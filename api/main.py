@@ -80,11 +80,11 @@ async def lifespan(app: FastAPI):
         # <<< ADDED: Download model from Azure ML Registry
         download_model_from_aml()
 
-        MODEL_PATH = "/app/artifacts/model.pkl"
-        SCALER_PATH = "/app/artifacts/scaler.pkl"
+        MODEL_PATH = os.environ["MODEL_PATH"]
+        SCALER_PATH = os.environ["SCALER_PATH"]
 
         logger.info(f"Using model path: {MODEL_PATH}")
-        logger.info(f"Using scaler path: {SCALER_PATH}")
+        logger.info(f"Using scaler path: {SCALER_PATH}")    
 
         inference_pipeline = InferencePipeline(
             model_path=MODEL_PATH,
