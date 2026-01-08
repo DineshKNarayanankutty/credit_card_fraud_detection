@@ -39,6 +39,10 @@ from src.utils.io import (
     SCALER_PATH,
 )
 
+from azure.identity import DefaultAzureCredential
+from azure.ai.ml import MLClient
+from azure.ai.ml.entities import Model
+
 logger = logging.getLogger(__name__)
 
 
@@ -170,7 +174,43 @@ class TrainingPipeline:
         shutil.copy(self.config.model.output_path, "outputs/model.pkl")
         shutil.copy(SCALER_PATH, "outputs/scaler.pkl")
 
+        self.register_model_to_azureml()
+
         logger.info("Training stage completed successfully")
+
+    def register_model_to_azureml(self):
+        """
+        Register model + scaler to Azure ML Model Registry.
+        Runs only when executed inside Azure ML.
+        """
+        if "AZUREML_RUN_ID" not in os.environ:
+            logger.info("Not running inside Azure ML — skipping model registration")
+            return
+
+        logger.info("Registering model to Azure ML Model Registry")
+
+        credential = DefaultAzureCredential()
+
+        ml_client = MLClient(
+            credential=credential,
+            subscription_id=os.environ["AZURE_SUBSCRIPTION_ID"],
+            resource_group_name=os.environ["AZURE_RESOURCE_GROUP"],
+            workspace_name=os.environ["AZURE_ML_WORKSPACE"],
+        )
+
+        model = Model(
+            name=self.config.model.name,          # e.g. "fraud-model"
+            path="outputs",                        # contains model.pkl + scaler.pkl
+            type="custom_model",
+            description="Credit Card Fraud Detection model",
+            labels={"latest": "true"}
+        )
+
+        ml_client.models.create_or_update(model)
+
+        logger.info("Model successfully registered in Azure ML")
+        registered = ml_client.models.create_or_update(model)
+        logger.info(f"Registered model version: {registered.version}")
 
 
 # -----------------------------
