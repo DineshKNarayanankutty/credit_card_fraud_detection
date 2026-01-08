@@ -20,10 +20,16 @@ def download_model_from_aml():
 
     print(f"Downloading model '{model_name}:{model_label}' to {target_dir}")
 
-    ml_client.models.download(
+    model = ml_client.models.get(
         name=model_name,
         label=model_label,
+    )
+
+    ml_client.models.download(
+        name=model.name,
+        version=model.version,
         download_path=target_dir,
+        exist_ok=True,
     )
 
     print("Model download completed")
