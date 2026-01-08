@@ -80,15 +80,11 @@ async def lifespan(app: FastAPI):
         # <<< ADDED: Download model from Azure ML Registry
         download_model_from_aml()
 
-        MODEL_PATH = os.getenv(
-            "MODEL_PATH",
-            config.model.output_path
-        )
+        MODEL_PATH = "/app/artifacts/model.pkl"
+        SCALER_PATH = "/app/artifacts/scaler.pkl"
 
-        SCALER_PATH = os.getenv(
-            "SCALER_PATH",
-            "artifacts/scaler.pkl"
-        )
+        logger.info(f"Using model path: {MODEL_PATH}")
+        logger.info(f"Using scaler path: {SCALER_PATH}")
 
         inference_pipeline = InferencePipeline(
             model_path=MODEL_PATH,
@@ -253,8 +249,8 @@ async def get_info() -> Dict[str, Any]:
         "service": "Fraud Detection API",
         "api_version": "1.0.0",
         "model_version": model_version,
-        "model_path": config.model.model_path,
-        "scaler_path": config.model.preprocessor_path,
+        "model_path": "/app/artifacts/model.pkl",
+        "scaler_path": "/app/artifacts/scaler.pkl",
         "default_threshold": DEFAULT_THRESHOLD,
     }
 
