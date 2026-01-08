@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY api/ ./api/
 COPY src/ ./src/
 COPY pipelines/ ./pipelines/
-COPY artifacts/ ./artifacts/
+#COPY artifacts/ ./artifacts/       #Only for Local
 COPY params.yaml .
 
 RUN useradd -m -u 1000 mlops && chown -R mlops:mlops /app
