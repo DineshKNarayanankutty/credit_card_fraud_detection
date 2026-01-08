@@ -18,7 +18,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 
 from src.utils.logger import setup_logging
 from src.utils.config import config
@@ -31,6 +30,9 @@ from src.inference.schema import (
     ErrorResponse
 )
 from pipelines.inference_pipeline import InferencePipeline
+
+# <<< ADDED: Azure ML model downloader
+from src.inference.aml_model_loader import download_model_from_aml
 
 # ------------------------------------------------------------
 # Logging MUST be initialized early
@@ -70,23 +72,24 @@ async def lifespan(app: FastAPI):
     """
     global inference_pipeline, model_version
 
-    # ─────────────────────────────────────────────────────────
-    # STARTUP
-    # ─────────────────────────────────────────────────────────
     logger.info("=" * 60)
     logger.info("API STARTUP")
     logger.info("=" * 60)
 
-    MODEL_PATH = os.getenv(
-        "MODEL_PATH",
-        config.model.output_path
-    )
-
-    SCALER_PATH = os.getenv(
-        "SCALER_PATH",
-        "artifacts/scaler.pkl"
-    )
     try:
+        # <<< ADDED: Download model from Azure ML Registry
+        download_model_from_aml()
+
+        MODEL_PATH = os.getenv(
+            "MODEL_PATH",
+            config.model.output_path
+        )
+
+        SCALER_PATH = os.getenv(
+            "SCALER_PATH",
+            "artifacts/scaler.pkl"
+        )
+
         inference_pipeline = InferencePipeline(
             model_path=MODEL_PATH,
             scaler_path=SCALER_PATH
