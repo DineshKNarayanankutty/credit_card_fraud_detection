@@ -15,6 +15,7 @@ evidently
 
 # Cloud (Azure ML)
 azure-ai-ml==1.12.1
+azure-identity
 
 # API
 fastapi==0.104.1
