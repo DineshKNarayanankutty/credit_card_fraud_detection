@@ -1,7 +1,6 @@
 from azure.identity import DefaultAzureCredential
 from azure.ai.ml import MLClient
 import os
-import shutil
 
 def download_model_from_aml():
     model_name = os.environ["AML_MODEL_NAME"]
@@ -17,25 +16,41 @@ def download_model_from_aml():
     )
 
     target_dir = "/app/artifacts"
-
-    # IMPORTANT: clean directory manually (SDK does NOT do this)
-    if os.path.exists(target_dir):
-        shutil.rmtree(target_dir)
     os.makedirs(target_dir, exist_ok=True)
 
     print(f"Downloading model '{model_name}:{model_label}' to {target_dir}")
 
-    # Step 1: resolve label → version
     model = ml_client.models.get(
         name=model_name,
         label=model_label,
     )
 
-    # Step 2: download by NAME + VERSION ONLY
     ml_client.models.download(
         name=model.name,
         version=model.version,
         download_path=target_dir,
     )
 
+    # 🔍 IMPORTANT PART — find actual files
+    model_path = None
+    scaler_path = None
+
+    for root, _, files in os.walk(target_dir):
+        if "model.pkl" in files:
+            model_path = os.path.join(root, "model.pkl")
+        if "scaler.pkl" in files:
+            scaler_path = os.path.join(root, "scaler.pkl")
+
+    if not model_path:
+        raise FileNotFoundError("model.pkl not found after AML download")
+
+    if not scaler_path:
+        raise FileNotFoundError("scaler.pkl not found after AML download")
+
+    # ✅ Expose paths to the API
+    os.environ["MODEL_PATH"] = model_path
+    os.environ["SCALER_PATH"] = scaler_path
+
+    print(f"Resolved MODEL_PATH={model_path}")
+    print(f"Resolved SCALER_PATH={scaler_path}")
     print("Model download completed")
