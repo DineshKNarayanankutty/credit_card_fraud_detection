@@ -6,7 +6,7 @@ name: Build and deploy container app to Azure Web App - mlops-ccfd-wa
 on:
   push:
     branches:
-      - main
+      - none
   workflow_dispatch:
 
 jobs:
@@ -60,4 +60,5 @@ jobs:
           app-name: 'mlops-ccfd-wa'
           slot-name: 'Production'
           images: 'mlopsazmlacr.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_AEEE560699DE4E9AADC41AE47E054A30 }}/fraud-api:${{ github.sha }}'
+
           
