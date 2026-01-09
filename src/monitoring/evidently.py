@@ -1,66 +1,73 @@
 """
-Drift detection contract.
+Monitoring contract for Evidently (0.7.x).
 
 Purpose:
-- Keep DVC pipeline reproducible
-- Allow future integration with Evidently / Azure ML Monitor
-- NEVER break training pipelines
+- Validate availability of monitoring data
+- Produce stable artifacts for pipelines
+- Keep Evidently usage UI-only (by design)
+
+Evidently is NOT executed programmatically.
 """
 
 import json
 import logging
-import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 
-DVC_OUTPUT_PATH = "artifacts/drift_report.json"
+REFERENCE_DATA = Path("data/reference/reference.csv")
+INCOMING_DATA = Path("data/incoming/incoming.csv")
+ARTIFACT_PATH = Path("artifacts/drift_status.json")
+
+ARTIFACT_PATH.parent.mkdir(exist_ok=True)
 
 
-def run_drift_check(
-    reference_data_path: str,
-    current_data_path: str,
-    drift_columns: List[str] = None,
-    output_dir: str = "reports/drift",
-) -> Dict[str, bool]:
+def run_monitoring() -> Dict:
     """
-    Drift detection stub.
+    Monitoring guard + status artifact.
 
-    This function intentionally does NOT implement Evidently logic.
-    Monitoring tools are executed post-deployment.
+    Actual drift inspection is done via `evidently ui`.
     """
 
-    reference_path = Path(reference_data_path)
-    current_path = Path(current_data_path)
-
-    if not reference_path.exists() or not any(reference_path.iterdir()):
-        results = {
-            "data_drift": False,
-            "prediction_drift": False,
+    if not REFERENCE_DATA.exists():
+        result = {
             "skipped": True,
-            "reason": "Reference data not available",
+            "reason": "Reference data not found",
         }
+        _write(result)
+        logger.warning(result["reason"])
+        return result
 
-    elif not current_path.exists() or not any(current_path.iterdir()):
-        results = {
-            "data_drift": False,
-            "prediction_drift": False,
+    if not INCOMING_DATA.exists():
+        result = {
             "skipped": True,
-            "reason": "Incoming data not available",
+            "reason": "Incoming data not found",
         }
+        _write(result)
+        logger.warning(result["reason"])
+        return result
 
-    else:
-        # Placeholder — real monitoring runs outside DVC
-        results = {
-            "data_drift": False,
-            "prediction_drift": False,
-            "skipped": False,
-        }
+    result = {
+        "skipped": False,
+        "reference_rows": _count_rows(REFERENCE_DATA),
+        "incoming_rows": _count_rows(INCOMING_DATA),
+        "message": "Data available for Evidently UI inspection",
+    }
 
-    os.makedirs("artifacts", exist_ok=True)
-    with open(DVC_OUTPUT_PATH, "w") as f:
-        json.dump(results, f, indent=2)
+    _write(result)
+    logger.info("Monitoring data validated successfully")
+    return result
 
-    logger.info(f"Drift report written to {DVC_OUTPUT_PATH}")
-    return results
+
+def _count_rows(path: Path) -> int:
+    return sum(1 for _ in open(path)) - 1
+
+
+def _write(data: Dict):
+    with open(ARTIFACT_PATH, "w") as f:
+        json.dump(data, f, indent=2)
+
+
+if __name__ == "__main__":
+    run_monitoring()
