@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 import sys
 from pathlib import Path
 
-# Make project importable
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# Project is mounted at /opt/project
+PROJECT_ROOT = Path("/opt/project")
 sys.path.append(str(PROJECT_ROOT))
 
 from src.monitoring.drift import run_drift_detection
@@ -14,7 +14,6 @@ from src.monitoring.drift import run_drift_detection
 
 default_args = {
     "owner": "mlops",
-    "depends_on_past": False,
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
@@ -23,7 +22,7 @@ default_args = {
 with DAG(
     dag_id="credit_card_fraud_monitoring",
     default_args=default_args,
-    description="Batch monitoring for credit card fraud model",
+    description="Batch drift detection for fraud model",
     schedule_interval="@daily",
     start_date=datetime(2024, 1, 1),
     catchup=False,
