@@ -9,7 +9,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(PROJECT_ROOT))
 
-from src.monitoring.evidently import run_monitoring
+from src.monitoring.drift import run_drift_detection
 
 
 default_args = {
@@ -31,8 +31,8 @@ with DAG(
 ) as dag:
 
     run_drift = PythonOperator(
-        task_id="run_drift_check",
-        python_callable=run_monitoring,
+        task_id="run_drift_detection",
+        python_callable=run_drift_detection,
     )
 
     run_drift
