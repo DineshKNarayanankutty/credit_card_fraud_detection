@@ -1,33 +1,26 @@
 schema: '2.0'
 stages:
   preprocess:
-    cmd: python -m pipelines.train_pipeline --stage preprocess --data-path 
+    cmd: python -m pipelines.train_pipeline --stage preprocess --raw-data 
       data/raw/creditcard.csv
     deps:
     - path: data/raw/creditcard.csv
       hash: md5
       md5: e90efcb83d69faf99fcab8b0255024de
       size: 150828752
+    - path: params.yaml
+      hash: md5
+      md5: e31349af5c5b56261faf7a0c5e1f6648
+      size: 264
     - path: pipelines/train_pipeline.py
       hash: md5
-      md5: 21d1164c2dd5c6ed2f8b4e2fb0fe1070
-      size: 6605
-    - path: src
+      md5: d5e767ea9b008d57bcb5f1a886967585
+      size: 8096
+    - path: src/data
       hash: md5
-      md5: a89d35e9ecd318b252274d65b3698644.dir
-      size: 107199
-      nfiles: 32
-    params:
-      params.yaml:
-        data:
-          train_ratio: 0.7
-          val_ratio: 0.15
-          test_ratio: 0.15
-          random_state: 42
-        features:
-          scaling_method: standard
-          handle_imbalance: true
-          smote_k_neighbors: 5
+      md5: 9e916100ae2e9300880f7a92fbb174dc.dir
+      size: 21902
+      nfiles: 8
     outs:
     - path: artifacts/scaler.pkl
       hash: md5
@@ -39,7 +32,8 @@ stages:
       size: 60970328
       nfiles: 6
   train:
-    cmd: python -m pipelines.train_pipeline --stage train
+    cmd: python -m pipelines.train_pipeline --stage train --raw-data 
+      data/raw/creditcard.csv
     deps:
     - path: artifacts/scaler.pkl
       hash: md5
@@ -50,26 +44,34 @@ stages:
       md5: 272c251299054bf96ac7de04fab002b0.dir
       size: 60970328
       nfiles: 6
+    - path: params.yaml
+      hash: md5
+      md5: e31349af5c5b56261faf7a0c5e1f6648
+      size: 264
     - path: pipelines/train_pipeline.py
       hash: md5
-      md5: 21d1164c2dd5c6ed2f8b4e2fb0fe1070
-      size: 6605
-    - path: src
+      md5: d5e767ea9b008d57bcb5f1a886967585
+      size: 8096
+    - path: src/evaluation
       hash: md5
-      md5: a89d35e9ecd318b252274d65b3698644.dir
-      size: 107199
-      nfiles: 32
-    params:
-      params.yaml:
-        evaluation:
-          threshold_method: f1
-        features:
-          scaling_method: standard
-          handle_imbalance: true
-          smote_k_neighbors: 5
-        model:
-          model_type: xgboost
-          cv_folds: 5
+      md5: 8bd30c4ec1a4f5fdc923f34081b4b95d.dir
+      size: 23633
+      nfiles: 6
+    - path: src/features
+      hash: md5
+      md5: fea08c360753344f5bc207767afeda7d.dir
+      size: 3079
+      nfiles: 2
+    - path: src/models
+      hash: md5
+      md5: 06d0740b8222c44f199f0b371225d695.dir
+      size: 14636
+      nfiles: 6
+    - path: src/utils
+      hash: md5
+      md5: d3929bb9d288c4885c024488afa1415d.dir
+      size: 19069
+      nfiles: 8
     outs:
     - path: artifacts/cv_scores.json
       hash: md5
@@ -98,49 +100,22 @@ stages:
       hash: md5
       md5: 527939f31df9ff58b28531fba3b6ca69
       size: 954
-    - path: data/processed
-      hash: md5
-      md5: 272c251299054bf96ac7de04fab002b0.dir
-      size: 60970328
-      nfiles: 6
     - path: pipelines/evaluate_pipeline.py
       hash: md5
       md5: 39ea2a283f3164c4c5316a528ee03c92
       size: 3548
-    - path: src
+    - path: src/evaluation
       hash: md5
-      md5: a89d35e9ecd318b252274d65b3698644.dir
-      size: 107199
-      nfiles: 32
+      md5: 8bd30c4ec1a4f5fdc923f34081b4b95d.dir
+      size: 23633
+      nfiles: 6
+    - path: src/inference
+      hash: md5
+      md5: a13d879edadd9cbecf3149bab64d2752.dir
+      size: 17182
+      nfiles: 5
     outs:
     - path: artifacts/evaluation_metrics.json
       hash: md5
       md5: a96f7781087cf8428268ef193fde73dc
       size: 855
-  drift_check:
-    cmd: python -m pipelines.drift_pipeline
-    deps:
-    - path: data/incoming
-      hash: md5
-      md5: 234fe32b47806dbf008fc0e7081be731.dir
-      size: 0
-      nfiles: 1
-    - path: data/reference
-      hash: md5
-      md5: 234fe32b47806dbf008fc0e7081be731.dir
-      size: 0
-      nfiles: 1
-    - path: pipelines/drift_pipeline.py
-      hash: md5
-      md5: eaf11afdeadfe12de57e052407137d28
-      size: 988
-    - path: src
-      hash: md5
-      md5: 449a671a64d72020c32afaa2ac935872.dir
-      size: 98906
-      nfiles: 33
-    outs:
-    - path: artifacts/drift_report.json
-      hash: md5
-      md5: adf00d9552da0c0df79b7a14ce277a44
-      size: 78

@@ -1,49 +1,40 @@
 stages:
   preprocess:
-    cmd: python -m pipelines.train_pipeline --stage preprocess --data-path 
-      data/raw/creditcard.csv
+    cmd: python -m pipelines.train_pipeline --stage preprocess --raw-data data/raw/creditcard.csv
     deps:
-    - data/raw/creditcard.csv
-    - pipelines/train_pipeline.py
-    - src
-    params:
-    - data
-    - features
+      - pipelines/train_pipeline.py
+      - src/data
+      - data/raw/creditcard.csv
+      - params.yaml
     outs:
-    - artifacts/scaler.pkl
-    - data/processed
+      - data/processed
+      - artifacts/scaler.pkl
+
   train:
-    cmd: python -m pipelines.train_pipeline --stage train
+    cmd: python -m pipelines.train_pipeline --stage train --raw-data data/raw/creditcard.csv
     deps:
-    - artifacts/scaler.pkl
-    - data/processed
-    - pipelines/train_pipeline.py
-    - src
+      - pipelines/train_pipeline.py
+      - src/models
+      - src/features
+      - src/evaluation
+      - src/utils
+      - data/processed
+      - artifacts/scaler.pkl
+      - params.yaml
     outs:
-    - artifacts/cv_scores.json
-    - artifacts/metrics.json
-    - artifacts/model.pkl
-    - artifacts/threshold.json
-    params:
-    - evaluation
-    - features
-    - model
+      - artifacts/model.pkl
+      - artifacts/metrics.json
+      - artifacts/cv_scores.json
+      - artifacts/threshold.json
+
   evaluate:
     cmd: python -m pipelines.evaluate_pipeline
     deps:
-    - artifacts/model.pkl
-    - artifacts/scaler.pkl
-    - data/processed
-    - pipelines/evaluate_pipeline.py
-    - src
+      - pipelines/evaluate_pipeline.py
+      - src/inference
+      - src/evaluation
+      - artifacts/model.pkl
+      - artifacts/scaler.pkl
     outs:
-    - artifacts/evaluation_metrics.json
-  drift_check:
-    cmd: python -m pipelines.drift_pipeline
-    deps:
-    - data/incoming
-    - data/reference
-    - pipelines/drift_pipeline.py
-    - src
-    outs:
-    - artifacts/drift_report.json
+      - artifacts/evaluation_metrics.json
+

@@ -1,6 +1,0 @@
-[core]
-    remote = azure-blob
-    autostage = true
-['remote "azure-blob"']
-    url = azure://dvc-data
-    account_name = mlopsdvcstore123
