@@ -43,6 +43,12 @@ from azure.identity import DefaultAzureCredential
 from azure.ai.ml import MLClient
 from azure.ai.ml.entities import Model
 
+import mlflow
+import mlflow.sklearn
+import yaml
+
+from src.utils.mlflow_config import configure_mlflow
+
 logger = logging.getLogger(__name__)
 
 
@@ -211,6 +217,46 @@ class TrainingPipeline:
         logger.info("Model successfully registered in Azure ML")
         registered = ml_client.models.create_or_update(model)
         logger.info(f"Registered model version: {registered.version}")
+
+    def run_training():
+        configure_mlflow()
+
+        with open("params.yaml") as f:
+            params = yaml.safe_load(f)
+
+        with mlflow.start_run(run_name="fraud_model_training"):
+
+            # Log parameters (explicit, no magic)
+            mlflow.log_params({
+                "model_type": params["model"]["type"],
+                "n_estimators": params["model"]["n_estimators"],
+                "max_depth": params["model"]["max_depth"],
+                "class_weight": params["model"]["class_weight"],
+                "threshold": params["threshold"]["value"],
+            })
+
+            model, scaler = train_model(params)
+            metrics = evaluate_model(model, scaler)
+
+            # Log metrics
+            mlflow.log_metrics(metrics)
+
+            # Log artifacts
+            mlflow.log_artifact("artifacts/model.pkl")
+            mlflow.log_artifact("artifacts/scaler.pkl")
+            mlflow.log_artifact("artifacts/threshold.json")
+
+            # Register model (THIS is what makes it production-grade)
+            mlflow.sklearn.log_model(
+                sk_model=model,
+                artifact_path="model",
+                registered_model_name="credit_card_fraud_model",
+            )
+
+            # Optional but recommended
+            mlflow.set_tag("pipeline", "train")
+            mlflow.set_tag("orchestrator", "dvc")
+
 
 
 # -----------------------------
