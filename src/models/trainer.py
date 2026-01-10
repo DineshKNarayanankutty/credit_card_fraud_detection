@@ -3,9 +3,12 @@ Model training layer.
 
 Responsibility:
 - Train models ONLY
-- Track experiments via MLflow
+- Perform cross-validation
+- Produce predictions and probabilities
 
 NO file I/O
+NO MLflow
+NO orchestration
 NO data loading
 NO preprocessing
 """
@@ -14,8 +17,6 @@ import logging
 from typing import Dict, Any
 
 import numpy as np
-import mlflow
-import mlflow.sklearn
 from sklearn.model_selection import cross_val_score
 from xgboost import XGBClassifier
 
@@ -29,7 +30,10 @@ def train(
     verbose: bool = True,
 ) -> XGBClassifier:
     """
-    Train model on data and log training details to MLflow.
+    Train model on provided data.
+
+    Returns:
+        Trained model
     """
 
     # -----------------------------
@@ -47,30 +51,11 @@ def train(
     )
 
     # -----------------------------
-    # MLflow parameter logging
-    # -----------------------------
-    try:
-        mlflow.log_params(model.get_params())
-    except Exception as e:
-        logger.warning(f"Could not log model parameters to MLflow: {e}")
-
-    # -----------------------------
     # Model training
     # -----------------------------
     model.fit(X_train, y_train, verbose=verbose)
 
-    logger.info("Training complete")
-
-    # -----------------------------
-    # Log trained model
-    # -----------------------------
-    try:
-        mlflow.sklearn.log_model(
-            sk_model=model,
-            artifact_path="model",
-        )
-    except Exception as e:
-        logger.warning(f"Could not log model artifact to MLflow: {e}")
+    logger.info("Model training completed")
 
     return model
 
@@ -82,12 +67,12 @@ def cross_validate(
     cv: int = 5,
 ) -> Dict[str, Dict[str, float]]:
     """
-    Cross-validate model and log aggregated CV metrics to MLflow.
+    Perform cross-validation.
+
+    Returns:
+        Dict with mean and std for each metric
     """
 
-    # -----------------------------
-    # Safety checks
-    # -----------------------------
     if X.shape[0] != len(y):
         raise ValueError(
             f"X and y size mismatch: X={X.shape[0]}, y={len(y)}"
@@ -108,26 +93,18 @@ def cross_validate(
                 scoring=metric,
             )
 
-            mean_score = float(scores.mean())
-            std_score = float(scores.std())
-
             results[metric] = {
-                "mean": mean_score,
-                "std": std_score,
+                "mean": float(scores.mean()),
+                "std": float(scores.std()),
             }
 
             logger.info(
-                f"{metric}: {mean_score:.4f} (+/- {std_score:.4f})"
-            )
-
-            # Log only MEAN to MLflow (best practice)
-            mlflow.log_metric(
-                f"cv_{metric}",
-                mean_score,
+                f"{metric}: {scores.mean():.4f} "
+                f"(+/- {scores.std():.4f})"
             )
 
         except Exception as e:
-            logger.warning(f"Could not compute {metric}: {e}")
+            logger.warning(f"Failed CV metric {metric}: {e}")
 
     return results
 
@@ -139,12 +116,12 @@ def evaluate_on_set(
     set_name: str = "test",
 ) -> Dict[str, Any]:
     """
-    Evaluate model on a dataset and log high-level metrics to MLflow.
+    Run inference on a dataset.
+
+    Returns:
+        Raw predictions and probabilities
     """
 
-    # -----------------------------
-    # Safety checks
-    # -----------------------------
     if X.shape[0] != len(y):
         raise ValueError(
             f"{set_name} set mismatch: X={X.shape[0]}, y={len(y)}"
@@ -157,13 +134,6 @@ def evaluate_on_set(
 
     y_pred = model.predict(X)
     y_proba = model.predict_proba(X)[:, 1]
-
-    logger.info(f"{set_name.capitalize()} evaluation complete")
-
-    # NOTE:
-    # Detailed metrics (precision, recall, etc.)
-    # are computed and logged in evaluation layer.
-    # This function only returns raw outputs.
 
     return {
         "predictions": y_pred,
